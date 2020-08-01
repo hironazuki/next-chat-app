@@ -1,5 +1,5 @@
 import React, { useEffect, useReducer } from "react";
-import { API, graphqlOperation, Auth } from "aws-amplify";
+import { API, graphqlOperation } from "aws-amplify";
 import { GetServerSideProps } from "next";
 import {
   AuthTokens,
@@ -11,6 +11,10 @@ import {
 import { createRoom } from "../src/graphql/mutations";
 import { onCreateRoom } from "../src/graphql/subscriptions";
 import { listRooms } from "../src/graphql/queries";
+
+import { ListRoomsQuery, OnCreateRoomSubscription } from "../src/API";
+
+type RoomSubscriptionEvent = { value: { data: OnCreateRoomSubscription } };
 
 const QUERY = "QUERY";
 const SUBSCRIPTION = "SUBSCRIPTION";
@@ -54,12 +58,13 @@ const Home = (props: { initialAuth: AuthTokens }) => {
           // @ts-ignore
           authMode: "API_KEY",
         });
-        //   // graphqlOperation(listPosts, {
-        //   //   filter: { username: { eq: "rukoshio" } },
-        //   // })
-        // );
-        console.log("rooms: ", roomData.data.listRooms.items);
-        dispatch({ type: QUERY, rooms: roomData.data.listRooms.items });
+        if ("data" in roomData && roomData.data) {
+          const rooms = roomData.data as ListRoomsQuery;
+          if (rooms.listRooms) {
+            console.log("rooms: ", rooms.listRooms.items);
+            dispatch({ type: QUERY, rooms: rooms.listRooms.items });
+          }
+        }
       } catch (e) {
         console.log(e);
       }
@@ -69,14 +74,19 @@ const Home = (props: { initialAuth: AuthTokens }) => {
       query: onCreateRoom,
       // @ts-ignore
       authMode: "API_KEY",
-    }).subscribe({
-      next: (eventData) => {
-        const room = eventData.value.data.onCreateRoom;
-        dispatch({ type: SUBSCRIPTION, room });
-      },
     });
+    if ("subscribe" in subscription) {
+      subscription.subscribe({
+        next: ({ value: { data } }: RoomSubscriptionEvent) => {
+          if (data.onCreateRoom) {
+            const room = data.onCreateRoom;
+            dispatch({ type: SUBSCRIPTION, room });
+          }
+        },
+      });
+    }
 
-    return () => subscription.unsubscribe();
+    // return () => subscription.unsubscribe();
   }, []);
   // const getLocalStorageIdToken = async () => {
   //   const resp = await Auth.currentSession();
