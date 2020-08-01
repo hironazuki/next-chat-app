@@ -13,6 +13,10 @@ module.exports = (phase) => {
           REDIRECT_SIGN_IN: "http://localhost:3000/token",
           REDIRECT_SIGN_OUT: "http://localhost:3000/",
           AUTH_COOKIE_DOMAIN: "localhost",
+
+          COGNITO_IDENTITY_POOL_ID: process.env.COGNITO_IDENTITY_POOL_ID,
+          GRAPHQL_ENDPOINT: process.env.GRAPHQL_ENDPOINT,
+          APPSYNC_APIKEY: process.env.APPSYNC_APIKEY,
         },
       };
     default:
@@ -26,6 +30,10 @@ module.exports = (phase) => {
           REDIRECT_SIGN_IN: "https://next-chat-app.vercel.app/token",
           REDIRECT_SIGN_OUT: "https://next-chat-app.vercel.app/",
           AUTH_COOKIE_DOMAIN: "next-chat-app.vercel.app",
+
+          COGNITO_IDENTITY_POOL_ID: process.env.COGNITO_IDENTITY_POOL_ID,
+          GRAPHQL_ENDPOINT: process.env.GRAPHQL_ENDPOINT,
+          APPSYNC_APIKEY: process.env.APPSYNC_APIKEY,
         },
       };
   }

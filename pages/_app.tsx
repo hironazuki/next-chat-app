@@ -2,9 +2,22 @@ import React from "react";
 import { AppProps } from "next/app";
 import Amplify from "@aws-amplify/core";
 import Auth from "@aws-amplify/auth";
-import config from "../src/aws-exports.js";
+// import config from "../src/aws-exports.js";
 
-Amplify.configure(config);
+// Amplify.configure(config);
+Amplify.configure({
+  aws_project_region: process.env.USER_POOL_REGION,
+  aws_cognito_identity_pool_id: process.env.COGNITO_IDENTITY_POOL_ID,
+  aws_cognito_region: process.env.USER_POOL_REGION,
+  aws_user_pools_id: process.env.USER_POOL_ID,
+  aws_user_pools_web_client_id: process.env.USER_POOL_CLIENT_ID,
+  oauth: {},
+  aws_appsync_graphqlEndpoint: process.env.GRAPHQL_ENDPOINT,
+  aws_appsync_region: process.env.USER_POOL_REGION,
+  aws_appsync_authenticationType: "AMAZON_COGNITO_USER_POOLS",
+  aws_appsync_apiKey: process.env.APPSYNC_APIKEY,
+});
+
 Amplify.configure({
   Auth: {
     region: process.env.USER_POOL_REGION,
