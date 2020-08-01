@@ -1,0 +1,35 @@
+{
+    "auth": {
+        "nextchatapp4583e0b6": {
+            "service": "Cognito",
+            "providerPlugin": "awscloudformation",
+            "dependsOn": [],
+            "customAuth": false
+        }
+    },
+    "api": {
+        "nextchatapp": {
+            "service": "AppSync",
+            "providerPlugin": "awscloudformation",
+            "output": {
+                "authConfig": {
+                    "defaultAuthentication": {
+                        "authenticationType": "AMAZON_COGNITO_USER_POOLS",
+                        "userPoolConfig": {
+                            "userPoolId": "authnextchatapp4583e0b6"
+                        }
+                    },
+                    "additionalAuthenticationProviders": [
+                        {
+                            "authenticationType": "API_KEY",
+                            "apiKeyConfig": {
+                                "apiKeyExpirationDays": 7,
+                                "description": ""
+                            }
+                        }
+                    ]
+                }
+            }
+        }
+    }
+}

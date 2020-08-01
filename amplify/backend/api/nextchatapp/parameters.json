@@ -1,0 +1,11 @@
+{
+    "AppSyncApiName": "nextchatapp",
+    "DynamoDBBillingMode": "PAY_PER_REQUEST",
+    "DynamoDBEnableServerSideEncryption": false,
+    "AuthCognitoUserPoolId": {
+        "Fn::GetAtt": [
+            "authnextchatapp4583e0b6",
+            "Outputs.UserPoolId"
+        ]
+    }
+}
