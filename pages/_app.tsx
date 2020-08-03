@@ -2,6 +2,9 @@ import React from "react";
 import { AppProps } from "next/app";
 import Amplify from "@aws-amplify/core";
 import Auth from "@aws-amplify/auth";
+
+import { reducer, StateProvider } from "../src/state";
+
 // import config from "../src/aws-exports.js";
 
 // Amplify.configure(config);
@@ -57,7 +60,11 @@ Auth.configure({
 });
 
 function App({ Component, pageProps }: AppProps) {
-  return <Component {...pageProps} />;
+  return (
+    <StateProvider reducer={reducer}>
+      <Component {...pageProps} />
+    </StateProvider>
+  );
 }
 
 export default App;

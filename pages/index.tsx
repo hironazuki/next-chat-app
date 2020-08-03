@@ -1,4 +1,4 @@
-import React, { useEffect, useReducer } from "react";
+import React, { useEffect } from "react";
 import { API, graphqlOperation } from "aws-amplify";
 import { GetServerSideProps } from "next";
 import {
@@ -13,26 +13,14 @@ import { onCreateRoom } from "../src/graphql/subscriptions";
 import { listRooms } from "../src/graphql/queries";
 
 import { ListRoomsQuery, OnCreateRoomSubscription } from "../src/API";
+import {
+  useStateValue,
+  setRoomsList,
+  createRoomSubscription,
+} from "../src/state";
+useStateValue;
 
 type RoomSubscriptionEvent = { value: { data: OnCreateRoomSubscription } };
-
-const QUERY = "QUERY";
-const SUBSCRIPTION = "SUBSCRIPTION";
-
-const initialState = {
-  rooms: [],
-};
-
-const reducer = (state, action) => {
-  switch (action.type) {
-    case QUERY:
-      return { ...state, rooms: action.rooms };
-    case SUBSCRIPTION:
-      return { ...state, rooms: [...state.rooms, action.room] };
-    default:
-      return state;
-  }
-};
 
 async function createNewRoom() {
   const room = {
@@ -45,11 +33,8 @@ async function createNewRoom() {
 const Home = (props: { initialAuth: AuthTokens }) => {
   const auth = useAuth(props.initialAuth);
   const { login, logout } = useAuthFunctions();
-  const [state, dispatch] = useReducer(reducer, initialState);
-
-  // const signOut = () => {
-  //   Auth.signOut().catch((error) => console.log("サインアウト失敗: ", error));
-  // };
+  const [{ rooms }, dispatch] = useStateValue();
+  console.log(rooms);
   useEffect(() => {
     async function fetchData() {
       try {
@@ -61,8 +46,7 @@ const Home = (props: { initialAuth: AuthTokens }) => {
         if ("data" in roomData && roomData.data) {
           const rooms = roomData.data as ListRoomsQuery;
           if (rooms.listRooms) {
-            console.log("rooms: ", rooms.listRooms.items);
-            dispatch({ type: QUERY, rooms: rooms.listRooms.items });
+            dispatch(setRoomsList(rooms));
           }
         }
       } catch (e) {
@@ -78,14 +62,14 @@ const Home = (props: { initialAuth: AuthTokens }) => {
     if ("subscribe" in subscription) {
       subscription.subscribe({
         next: ({ value: { data } }: RoomSubscriptionEvent) => {
+          console.log("Home -> eventData", data);
           if (data.onCreateRoom) {
-            const room = data.onCreateRoom;
-            dispatch({ type: SUBSCRIPTION, room });
+            console.log("testes");
+            dispatch(createRoomSubscription(data));
           }
         },
       });
     }
-
     // return () => subscription.unsubscribe();
   }, []);
   // const getLocalStorageIdToken = async () => {
@@ -107,8 +91,8 @@ const Home = (props: { initialAuth: AuthTokens }) => {
             My App
             <button onClick={createNewRoom}>Add Room</button>
             <div>
-              {state.rooms.length > 0 ? (
-                state.rooms.map((room) => (
+              {rooms.length > 0 ? (
+                rooms.map((room) => (
                   <p key={room.id}>
                     {room.owner} : {room.title} | {room.description} |{" "}
                     {room.createdAt}
