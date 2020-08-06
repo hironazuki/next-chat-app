@@ -211,7 +211,7 @@ const GenericTemplate: React.FC<GenericTemplateProps> = ({
                 <ListItemIcon>
                   <MeetingRoomIcon />
                 </ListItemIcon>
-                <ListItemText primary="チャットルーム" />
+                <ListItemText primary="ルーム一覧" />
               </ListItem>
             </Link>
           </List>
