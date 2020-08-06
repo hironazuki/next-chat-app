@@ -28,8 +28,7 @@ export const reducer = (state: State, action: Action): State => {
     case "SET_ROOMS_LIST":
       return { ...state, rooms: action.payload.listRooms.items };
     case "ON_CREATE_ROOM_SUBSCRIPTION":
-      console.log(action.payload.onCreateRoom);
-      return { ...state, rooms: [...state.rooms, action.payload.onCreateRoom] };
+      return { ...state, rooms: [action.payload.onCreateRoom, ...state.rooms] };
     // return {
     //   ...state,
     //   rooms: action.payload.listRooms.items,

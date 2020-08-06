@@ -1,13 +1,12 @@
 import React from "react";
+import Head from "next/head";
+
 import { AppProps } from "next/app";
 import Amplify from "@aws-amplify/core";
 import Auth from "@aws-amplify/auth";
 
 import { reducer, StateProvider } from "../src/state";
 
-// import config from "../src/aws-exports.js";
-
-// Amplify.configure(config);
 Amplify.configure({
   aws_project_region: process.env.USER_POOL_REGION,
   aws_cognito_identity_pool_id: process.env.COGNITO_IDENTITY_POOL_ID,
@@ -61,9 +60,18 @@ Auth.configure({
 
 function App({ Component, pageProps }: AppProps) {
   return (
-    <StateProvider reducer={reducer}>
-      <Component {...pageProps} />
-    </StateProvider>
+    <>
+      <Head>
+        <title>My page</title>
+        <meta
+          name="viewport"
+          content="minimum-scale=1, initial-scale=1, width=device-width"
+        />
+      </Head>
+      <StateProvider reducer={reducer}>
+        <Component {...pageProps} />
+      </StateProvider>
+    </>
   );
 }
 
