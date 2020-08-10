@@ -1,5 +1,10 @@
 import { State } from "./state";
-import { ListRoomsQuery, OnCreateRoomSubscription } from "../API";
+import {
+  ListRoomsQuery,
+  OnCreateRoomSubscription,
+  GetRoomQuery,
+  OnCreatePostSubscription,
+} from "../API";
 
 export type Action =
   | {
@@ -9,15 +14,20 @@ export type Action =
   | {
       type: "ON_CREATE_ROOM_SUBSCRIPTION";
       payload: OnCreateRoomSubscription;
+    }
+
+  // | {
+  //   type: 'ADD_PATIENT_ENTRY';
+  //   payload: Entry;
+  // }
+  | {
+      type: "SHOW_ROOM";
+      payload: GetRoomQuery;
+    }
+  | {
+      type: "ON_CREATE_POST_SUBSCRIPTION";
+      payload: OnCreatePostSubscription;
     };
-// | {
-//   type: 'ADD_PATIENT_ENTRY';
-//   payload: Entry;
-// }
-// | {
-//   type: 'SHOW_PATIENT';
-//   payload: Patient;
-// }
 // | {
 //   type: 'SET_DIAGNOSES_LIST';
 //   payload: Diagnosis[];
@@ -29,6 +39,7 @@ export const reducer = (state: State, action: Action): State => {
       return { ...state, rooms: action.payload.listRooms.items };
     case "ON_CREATE_ROOM_SUBSCRIPTION":
       return { ...state, rooms: [action.payload.onCreateRoom, ...state.rooms] };
+
     // return {
     //   ...state,
     //   rooms: action.payload.listRooms.items,
@@ -50,13 +61,19 @@ export const reducer = (state: State, action: Action): State => {
     //       entries: [...state.patient.entries, action.payload]
     //     }
     //   };
-    // case 'SHOW_PATIENT':
-    //   return {
-    //     ...state,
-    //     patient: {
-    //       ...action.payload
-    //     }
-    //   };
+    case "SHOW_ROOM":
+      return { ...state, room: action.payload.getRoom };
+    case "ON_CREATE_POST_SUBSCRIPTION":
+      return {
+        ...state,
+        room: {
+          ...state.room,
+          posts: {
+            ...state.room.posts,
+            items: [...state.room.posts.items, action.payload.onCreatePost],
+          },
+        },
+      };
     // case 'SET_DIAGNOSES_LIST':
     //   return {
     //     ...state,
@@ -104,13 +121,21 @@ export const createRoomSubscription = (
 //   };
 // };
 
-// export const showPatient = (patient: Patient): Action => {
-//   return {
-//     type: "SHOW_PATIENT",
-//     payload: patient,
-//   };
-// };
+export const showRoom = (room: GetRoomQuery): Action => {
+  return {
+    type: "SHOW_ROOM",
+    payload: room,
+  };
+};
 
+export const createPostSubscription = (
+  post: OnCreatePostSubscription
+): Action => {
+  return {
+    type: "ON_CREATE_POST_SUBSCRIPTION",
+    payload: post,
+  };
+};
 // export const setDiagnosesList = (diagnoses: Diagnosis[]): Action => {
 //   return {
 //     type: "SET_DIAGNOSES_LIST",

@@ -35,6 +35,7 @@ import TableRow from "@material-ui/core/TableRow";
 import Paper from "@material-ui/core/Paper";
 import TextField from "@material-ui/core/TextField";
 import Button from "@material-ui/core/Button";
+import Link from "../components/templates/Link";
 
 type RoomSubscriptionEvent = { value: { data: OnCreateRoomSubscription } };
 type FormState = {
@@ -61,13 +62,13 @@ const Home = (props: { initialAuth: AuthTokens }) => {
   useEffect(() => {
     async function fetchData() {
       try {
-        const roomData = await API.graphql({
+        const roomsData = await API.graphql({
           query: listRooms,
           // @ts-ignore
           authMode: "API_KEY",
         });
-        if ("data" in roomData && roomData.data) {
-          const rooms = roomData.data as ListRoomsQuery;
+        if ("data" in roomsData && roomsData.data) {
+          const rooms = roomsData.data as ListRoomsQuery;
           if (rooms.listRooms) {
             dispatch(setRoomsList(rooms));
           }
@@ -151,7 +152,9 @@ const Home = (props: { initialAuth: AuthTokens }) => {
               {rooms.map((room) => (
                 <TableRow key={room.id}>
                   <TableCell component="th" scope="room">
-                    {room.title}
+                    <Link href="/rooms/[id]" as={`/rooms/${room.id}`}>
+                      {room.title}
+                    </Link>
                   </TableCell>
                   <TableCell>{room.description}</TableCell>
                   <TableCell>{room.owner}</TableCell>
