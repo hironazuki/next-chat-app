@@ -34,7 +34,15 @@ export interface GetRoom {
     nextToken: string | null;
   } | null;
 }
-export interface Post {}
+export interface Post {
+  __typename: "Post";
+  id: string;
+  owner: string;
+  roomID: string;
+  content: string;
+  createdAt: string;
+  updatedAt: string;
+}
 
 export interface NewRoom {
   title: string;
