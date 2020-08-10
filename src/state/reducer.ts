@@ -4,6 +4,7 @@ import {
   OnCreateRoomSubscription,
   GetRoomQuery,
   OnCreatePostSubscription,
+  OnDeletePostSubscription,
 } from "../API";
 
 export type Action =
@@ -27,6 +28,10 @@ export type Action =
   | {
       type: "ON_CREATE_POST_SUBSCRIPTION";
       payload: OnCreatePostSubscription;
+    }
+  | {
+      type: "ON_DELETE_POST_SUBSCRIPTION";
+      payload: OnDeletePostSubscription;
     };
 // | {
 //   type: 'SET_DIAGNOSES_LIST';
@@ -71,6 +76,20 @@ export const reducer = (state: State, action: Action): State => {
           posts: {
             ...state.room.posts,
             items: [...state.room.posts.items, action.payload.onCreatePost],
+          },
+        },
+      };
+    case "ON_DELETE_POST_SUBSCRIPTION":
+      return {
+        ...state,
+        room: {
+          ...state.room,
+          posts: {
+            ...state.room.posts,
+            items: state.room.posts.items.filter(
+              (post) => post.id !== action.payload.onDeletePost.id
+            ),
+            // items: [...state.room.posts.items, action.payload.onCreatePost],
           },
         },
       };
@@ -133,6 +152,14 @@ export const createPostSubscription = (
 ): Action => {
   return {
     type: "ON_CREATE_POST_SUBSCRIPTION",
+    payload: post,
+  };
+};
+export const deletePostSubscription = (
+  post: OnDeletePostSubscription
+): Action => {
+  return {
+    type: "ON_DELETE_POST_SUBSCRIPTION",
     payload: post,
   };
 };

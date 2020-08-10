@@ -22,7 +22,6 @@ import {
   setRoomsList,
   createRoomSubscription,
 } from "../src/state";
-useStateValue;
 
 import GenericTemplate from "../components/templates/GenericTemplate";
 import { makeStyles } from "@material-ui/core/styles";

@@ -1,6 +1,5 @@
 import React, { useEffect, useState } from "react";
 import { useRouter } from "next/router";
-import { GetServerSideProps } from "next";
 import { API, graphqlOperation } from "aws-amplify";
 
 import { useAuth } from "../../auth";
@@ -8,18 +7,20 @@ import { useAuth } from "../../auth";
 import { createPost, deletePost } from "../../src/graphql/mutations";
 import { onCreatePost, onDeletePost } from "../../src/graphql/subscriptions";
 import { getRoom } from "../../src/graphql/queries";
-
+import { Post } from "../../types";
 import {
   GetRoomQuery,
   OnCreatePostSubscription,
+  OnDeletePostSubscription,
   CreatePostMutationVariables,
+  DeletePostMutationVariables,
 } from "../../src/API";
 import {
   useStateValue,
   showRoom,
   createPostSubscription,
+  deletePostSubscription,
 } from "../../src/state";
-useStateValue;
 
 import GenericTemplate from "../../components/templates/GenericTemplate";
 import { makeStyles } from "@material-ui/core/styles";
@@ -29,7 +30,12 @@ import Button from "@material-ui/core/Button";
 import Chip from "@material-ui/core/Chip";
 import IconButton from "@material-ui/core/IconButton";
 import CancelIcon from "@material-ui/icons/Cancel";
-type PostSubscriptionEvent = { value: { data: OnCreatePostSubscription } };
+type createPostSubscriptionEvent = {
+  value: { data: OnCreatePostSubscription };
+};
+type deletePostSubscriptionEvent = {
+  value: { data: OnDeletePostSubscription };
+};
 type FormState = {
   content: string;
 };
@@ -91,16 +97,30 @@ const Home = () => {
   }, [id]);
 
   useEffect(() => {
-    const subscription = API.graphql({
+    const newPostSubscription = API.graphql({
       query: onCreatePost,
       // @ts-ignore
       authMode: "API_KEY",
     });
-    if ("subscribe" in subscription) {
-      subscription.subscribe({
-        next: ({ value: { data } }: PostSubscriptionEvent) => {
+    if ("subscribe" in newPostSubscription) {
+      newPostSubscription.subscribe({
+        next: ({ value: { data } }: createPostSubscriptionEvent) => {
           if (data.onCreatePost) {
             dispatch(createPostSubscription(data));
+          }
+        },
+      });
+    }
+    const destroyPostSubscription = API.graphql({
+      query: onDeletePost,
+      // @ts-ignore
+      authMode: "API_KEY",
+    });
+    if ("subscribe" in destroyPostSubscription) {
+      destroyPostSubscription.subscribe({
+        next: ({ value: { data } }: deletePostSubscriptionEvent) => {
+          if (data.onDeletePost) {
+            dispatch(deletePostSubscription(data));
           }
         },
       });
@@ -112,29 +132,28 @@ const Home = () => {
     setInput((prev) => ({ ...prev, [name]: value }));
   };
 
-  const createNewPost = async () => {
+  const createNewPost = () => {
     if (input.content === "") return;
-    const newRoom: CreatePostMutationVariables = {
+    const newPost: CreatePostMutationVariables = {
       input: {
         roomID: id,
         content: input.content,
       },
     };
     setInput({ content: "" });
-    await API.graphql(graphqlOperation(createPost, newRoom));
+    API.graphql(graphqlOperation(createPost, newPost));
   };
 
-  const deletePost = (id: string): any => {
-    console.log("aaa");
-    // if (input.content === "") return;
-    // const newRoom: CreatePostMutationVariables = {
-    //   input: {
-    //     roomID: id,
-    //     content: input.content,
-    //   },
-    // };
-    // setInput({ content: "" });
+  const deleteMyPost = (post: Post) => {
     // await API.graphql(graphqlOperation(createPost, newRoom));
+    if (window.confirm(`${post.content}を削除しますか？`)) {
+      const killPost: DeletePostMutationVariables = {
+        input: {
+          id: post.id,
+        },
+      };
+      API.graphql(graphqlOperation(deletePost, killPost));
+    }
   };
   return (
     <GenericTemplate title={"チャットルーム"}>
@@ -149,7 +168,7 @@ const Home = () => {
                   <IconButton
                     color="secondary"
                     onClick={() => {
-                      deletePost(post.id);
+                      deleteMyPost(post);
                     }}
                   >
                     <CancelIcon />
@@ -182,7 +201,7 @@ const Home = () => {
             />
           </div>
           <Button onClick={createNewPost} variant="contained" color="primary">
-            追加
+            送信
           </Button>
         </>
       )}
