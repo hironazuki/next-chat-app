@@ -81,17 +81,14 @@ const Home = (props: { initialAuth: AuthTokens }) => {
       query: onCreateRoom,
       // @ts-ignore
       authMode: "API_KEY",
+    }).subscribe({
+      next: ({ value: { data } }: RoomSubscriptionEvent) => {
+        if (data.onCreateRoom) {
+          dispatch(createRoomSubscription(data));
+        }
+      },
     });
-    if ("subscribe" in subscription) {
-      subscription.subscribe({
-        next: ({ value: { data } }: RoomSubscriptionEvent) => {
-          if (data.onCreateRoom) {
-            dispatch(createRoomSubscription(data));
-          }
-        },
-      });
-    }
-    // return () => subscription.unsubscribe();
+    return () => subscription.unsubscribe();
   }, []);
 
   const onFormChange = ({

@@ -101,30 +101,30 @@ const Home = () => {
       query: onCreatePost,
       // @ts-ignore
       authMode: "API_KEY",
+    }).subscribe({
+      next: ({ value: { data } }: createPostSubscriptionEvent) => {
+        if (data.onCreatePost) {
+          dispatch(createPostSubscription(data));
+        }
+      },
     });
-    if ("subscribe" in newPostSubscription) {
-      newPostSubscription.subscribe({
-        next: ({ value: { data } }: createPostSubscriptionEvent) => {
-          if (data.onCreatePost) {
-            dispatch(createPostSubscription(data));
-          }
-        },
-      });
-    }
     const destroyPostSubscription = API.graphql({
       query: onDeletePost,
       // @ts-ignore
       authMode: "API_KEY",
+    }).subscribe({
+      next: ({ value: { data } }: deletePostSubscriptionEvent) => {
+        if (data.onDeletePost) {
+          dispatch(deletePostSubscription(data));
+        }
+      },
     });
-    if ("subscribe" in destroyPostSubscription) {
-      destroyPostSubscription.subscribe({
-        next: ({ value: { data } }: deletePostSubscriptionEvent) => {
-          if (data.onDeletePost) {
-            dispatch(deletePostSubscription(data));
-          }
-        },
-      });
-    }
+
+    return async () => {
+      // Clean up the subscription
+      await newPostSubscription.unsubscribe();
+      await destroyPostSubscription.unsubscribe();
+    };
   }, []);
   const onFormChange = ({
     target: { name, value },
@@ -132,7 +132,7 @@ const Home = () => {
     setInput((prev) => ({ ...prev, [name]: value }));
   };
 
-  const createNewPost = () => {
+  const createNewPost = async () => {
     if (input.content === "") return;
     const newPost: CreatePostMutationVariables = {
       input: {
@@ -141,7 +141,7 @@ const Home = () => {
       },
     };
     setInput({ content: "" });
-    API.graphql(graphqlOperation(createPost, newPost));
+    await API.graphql(graphqlOperation(createPost, newPost));
   };
 
   const deleteMyPost = (post: Post) => {
