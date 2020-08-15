@@ -54,6 +54,9 @@ const useStyles = makeStyles({
       marginBottom: "1rem",
     },
   },
+  deleteIcon: {
+    color: "#db2828",
+  },
 });
 
 const Home = () => {
@@ -166,7 +169,8 @@ const Home = () => {
                   <span>{post.owner}</span>
                   <Chip label={post.content} />
                   <IconButton
-                    color="secondary"
+                    // color="secondary"
+                    className={classes.deleteIcon}
                     onClick={() => {
                       deleteMyPost(post);
                     }}
