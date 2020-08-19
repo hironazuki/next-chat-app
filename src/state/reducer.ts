@@ -2,6 +2,7 @@ import { State } from "./state";
 import {
   ListRoomsQuery,
   OnCreateRoomSubscription,
+  OnUpdateRoomSubscription,
   GetRoomQuery,
   OnCreatePostSubscription,
   OnDeletePostSubscription,
@@ -15,6 +16,10 @@ export type Action =
   | {
       type: "ON_CREATE_ROOM_SUBSCRIPTION";
       payload: OnCreateRoomSubscription;
+    }
+  | {
+      type: "ON_UPDATE_ROOM_SUBSCRIPTION";
+      payload: OnUpdateRoomSubscription;
     }
 
   // | {
@@ -44,6 +49,8 @@ export const reducer = (state: State, action: Action): State => {
       return { ...state, rooms: action.payload.listRooms.items };
     case "ON_CREATE_ROOM_SUBSCRIPTION":
       return { ...state, rooms: [action.payload.onCreateRoom, ...state.rooms] };
+    case "ON_UPDATE_ROOM_SUBSCRIPTION":
+      return { ...state, room: action.payload.onUpdateRoom };
 
     // return {
     //   ...state,
@@ -122,6 +129,15 @@ export const createRoomSubscription = (
 ): Action => {
   return {
     type: "ON_CREATE_ROOM_SUBSCRIPTION",
+    payload: room,
+  };
+};
+
+export const updateRoomSubscription = (
+  room: OnUpdateRoomSubscription
+): Action => {
+  return {
+    type: "ON_UPDATE_ROOM_SUBSCRIPTION",
     payload: room,
   };
 };

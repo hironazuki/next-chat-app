@@ -31,12 +31,8 @@ import { makeStyles } from "@material-ui/core/styles";
 
 import Grid from "@material-ui/core/Grid";
 import Card from "@material-ui/core/Card";
-import CardActions from "@material-ui/core/CardActions";
 import CardContent from "@material-ui/core/CardContent";
 import Typography from "@material-ui/core/Typography";
-import IconButton from "@material-ui/core/IconButton";
-import CreateIcon from "@material-ui/icons/Create";
-import DeleteIcon from "@material-ui/icons/Delete";
 
 import Fab from "@material-ui/core/Fab";
 import AddIcon from "@material-ui/icons/Add";
@@ -86,6 +82,7 @@ const Home = (props: { initialAuth: AuthTokens }) => {
     setModalOpen(false);
     setError(undefined);
   };
+
   const classes = useStyles();
 
   useEffect(() => {
@@ -98,6 +95,7 @@ const Home = (props: { initialAuth: AuthTokens }) => {
         });
         if ("data" in roomsData && roomsData.data) {
           const rooms = roomsData.data as ListRoomsQuery;
+          console.log(rooms.listRooms);
           if (rooms.listRooms) {
             dispatch(setRoomsList(rooms));
           }
@@ -136,16 +134,6 @@ const Home = (props: { initialAuth: AuthTokens }) => {
       console.error(e.response.data);
       setError(e.response.data.error);
     }
-    // if (input.title === "") return;
-    // const newRoom: CreateRoomMutationVariables = {
-    //   input: {
-    //     title: input.title,
-    //     description: input.description,
-    //   },
-    // };
-    // setInput({ title: "", description: "" });
-    // closeModal();
-    // await API.graphql(graphqlOperation(createRoom, newRoom));
   };
   return (
     <GenericTemplate title="チャットルーム">
@@ -167,16 +155,16 @@ const Home = (props: { initialAuth: AuthTokens }) => {
       {rooms.length > 0 ? (
         <Grid container spacing={2}>
           {rooms.map((room) => (
-            <Grid item xs={12} md={6}>
-              <Card className={classes.card}>
-                <Link href="/rooms/[id]" as={`/rooms/${room.id}`}>
+            <Grid item xs={12} md={6} key={room.id}>
+              <Link href="/rooms/[id]" as={`/rooms/${room.id}`}>
+                <Card className={classes.card}>
                   <CardContent>
                     <Typography
                       className={classes.title}
                       color="textSecondary"
                       gutterBottom
                     >
-                      createby {room.owner}
+                      createBy {room.owner}
                     </Typography>
                     <Typography variant="h5" component="h2">
                       {room.title}
@@ -185,19 +173,19 @@ const Home = (props: { initialAuth: AuthTokens }) => {
                       {room.description}
                     </Typography>
                   </CardContent>
-                </Link>
 
-                {auth?.accessTokenData?.username === room.owner && (
+                  {/* {auth?.accessTokenData?.username === room.owner && (
                   <CardActions>
-                    <IconButton edge="end" aria-label="delete">
+                    <IconButton edge="end" aria-label="update">
                       <CreateIcon />
                     </IconButton>
                     <IconButton edge="end" aria-label="delete">
                       <DeleteIcon />
                     </IconButton>
                   </CardActions>
-                )}
-              </Card>
+                )} */}
+                </Card>
+              </Link>
             </Grid>
           ))}
         </Grid>

@@ -5,31 +5,51 @@ import { API, graphqlOperation } from "aws-amplify";
 import { useAuth } from "../../auth";
 
 import { createPost, deletePost } from "../../src/graphql/mutations";
-import { onCreatePost, onDeletePost } from "../../src/graphql/subscriptions";
+import {
+  onUpdateRoom,
+  onCreatePost,
+  onDeletePost,
+} from "../../src/graphql/subscriptions";
+
 import { getRoom } from "../../src/graphql/queries";
 import { Post } from "../../types";
 import {
   GetRoomQuery,
+  OnUpdateRoomSubscription,
   OnCreatePostSubscription,
   OnDeletePostSubscription,
   CreatePostMutationVariables,
   DeletePostMutationVariables,
+  UpdateRoomMutationVariables,
 } from "../../src/API";
 import {
   useStateValue,
   showRoom,
+  updateRoomSubscription,
   createPostSubscription,
   deletePostSubscription,
 } from "../../src/state";
+
+import UpdateRoomModal from "../../components/UpdateRoomModal";
 
 import GenericTemplate from "../../components/templates/GenericTemplate";
 import { makeStyles } from "@material-ui/core/styles";
 import TextField from "@material-ui/core/TextField";
 import Button from "@material-ui/core/Button";
 
+import Typography from "@material-ui/core/Typography";
 import Chip from "@material-ui/core/Chip";
+import Fab from "@material-ui/core/Fab";
 import IconButton from "@material-ui/core/IconButton";
 import CancelIcon from "@material-ui/icons/Cancel";
+import CreateIcon from "@material-ui/icons/Create";
+import DeleteIcon from "@material-ui/icons/Delete";
+
+import { updateRoom } from "../../src/graphql/mutations";
+import { RoomFormValues } from "../../components/AddRoomModal/AddRoomForm";
+
+type RoomSubscriptionEvent = { value: { data: OnUpdateRoomSubscription } };
+
 type createPostSubscriptionEvent = {
   value: { data: OnCreatePostSubscription };
 };
@@ -48,6 +68,10 @@ const useStyles = makeStyles({
     },
     textAlign: "right",
   },
+  currentChat: {
+    backgroundColor: "#37c43c",
+    color: "#ffffff",
+  },
   other: {
     justifyContent: "center",
     "& > *": {
@@ -56,6 +80,12 @@ const useStyles = makeStyles({
   },
   deleteIcon: {
     color: "#db2828",
+  },
+  deleteButton: {
+    marginLeft: "1rem",
+
+    backgroundColor: "#db2828",
+    color: "#ffffff",
   },
 });
 
@@ -66,6 +96,16 @@ const Home = () => {
     content: "",
   });
   const [id, setId] = useState<string>();
+  const [modalOpen, setModalOpen] = useState<boolean>(false);
+  const [error, setError] = useState<string | undefined>();
+  const openModal = (): void => {
+    setModalOpen(true);
+  };
+
+  const closeModal = (): void => {
+    setModalOpen(false);
+    setError(undefined);
+  };
 
   const router = useRouter();
   const classes = useStyles();
@@ -97,16 +137,25 @@ const Home = () => {
     if (id) {
       fetchData();
     }
-  }, [id]);
 
-  useEffect(() => {
+    const editRoomSubscription = API.graphql({
+      query: onUpdateRoom,
+      // @ts-ignore
+      authMode: "API_KEY",
+    }).subscribe({
+      next: ({ value: { data } }: RoomSubscriptionEvent) => {
+        if (data.onUpdateRoom && data.onUpdateRoom.id === id) {
+          dispatch(updateRoomSubscription(data));
+        }
+      },
+    });
     const newPostSubscription = API.graphql({
       query: onCreatePost,
       // @ts-ignore
       authMode: "API_KEY",
     }).subscribe({
       next: ({ value: { data } }: createPostSubscriptionEvent) => {
-        if (data.onCreatePost) {
+        if (data.onCreatePost && data.onCreatePost.roomID === id) {
           dispatch(createPostSubscription(data));
         }
       },
@@ -122,13 +171,13 @@ const Home = () => {
         }
       },
     });
-
     return async () => {
       // Clean up the subscription
+      await editRoomSubscription.unsubscribe();
       await newPostSubscription.unsubscribe();
       await destroyPostSubscription.unsubscribe();
     };
-  }, []);
+  }, [id]);
   const onFormChange = ({
     target: { name, value },
   }: React.ChangeEvent<HTMLInputElement>) => {
@@ -158,18 +207,73 @@ const Home = () => {
       API.graphql(graphqlOperation(deletePost, killPost));
     }
   };
+
+  const editRoom = async (values: RoomFormValues) => {
+    try {
+      const [id, title, description] = [
+        room.id,
+        values.title,
+        values.description,
+      ];
+      const newRoom: UpdateRoomMutationVariables = {
+        input: {
+          id,
+          title,
+          description,
+        },
+      };
+      closeModal();
+      await API.graphql(graphqlOperation(updateRoom, newRoom));
+    } catch (e) {
+      console.error(e.response.data);
+      setError(e.response.data.error);
+    }
+  };
   return (
-    <GenericTemplate title={"チャットルーム"}>
+    <GenericTemplate title={""}>
+      {auth?.accessTokenData?.username === room?.owner && (
+        <>
+          <UpdateRoomModal
+            modalOpen={modalOpen}
+            onSubmit={editRoom}
+            error={error}
+            onClose={closeModal}
+            room={room}
+          />
+          <div>
+            <Fab
+              size="small"
+              color="primary"
+              aria-label="edit"
+              onClick={() => openModal()}
+            >
+              <CreateIcon />
+            </Fab>
+            <Fab
+              size="small"
+              color="inherit"
+              aria-label="delete"
+              className={classes.deleteButton}
+            >
+              <DeleteIcon />
+            </Fab>
+          </div>
+        </>
+      )}
+
       {room ? (
         <div>
+          <Typography variant="h4" component="h2">
+            {room.title}
+          </Typography>
+          <Typography color="textSecondary">{room.description}</Typography>
           {room.posts.items.map((post) => {
             if (auth?.accessTokenData?.username === post.owner) {
               return (
                 <div className={classes.current} key={post.id}>
                   <span>{post.owner}</span>
-                  <Chip label={post.content} />
+                  <Chip label={post.content} className={classes.currentChat} />
                   <IconButton
-                    // color="secondary"
                     className={classes.deleteIcon}
                     onClick={() => {
                       deleteMyPost(post);
@@ -201,12 +305,18 @@ const Home = () => {
               value={input.content}
               label="チャット"
               name="content"
+              fullWidth
               onChange={onFormChange}
             />
+            <Button
+              onClick={createNewPost}
+              variant="contained"
+              color="primary"
+              style={{ float: "right" }}
+            >
+              送信
+            </Button>
           </div>
-          <Button onClick={createNewPost} variant="contained" color="primary">
-            送信
-          </Button>
         </>
       )}
     </GenericTemplate>
