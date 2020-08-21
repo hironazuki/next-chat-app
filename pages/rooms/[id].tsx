@@ -3,29 +3,38 @@ import { useRouter } from "next/router";
 import { API, graphqlOperation } from "aws-amplify";
 
 import { useAuth } from "../../auth";
+import Link from "../../components/templates/Link";
 
-import { createPost, deletePost } from "../../src/graphql/mutations";
+import {
+  createPost,
+  deletePost,
+  deleteRoom,
+} from "../../src/graphql/mutations";
 import {
   onUpdateRoom,
+  onDeleteRoom,
   onCreatePost,
   onDeletePost,
 } from "../../src/graphql/subscriptions";
 
 import { getRoom } from "../../src/graphql/queries";
-import { Post } from "../../types";
+import { Post, GetRoom } from "../../types";
 import {
   GetRoomQuery,
   OnUpdateRoomSubscription,
   OnCreatePostSubscription,
   OnDeletePostSubscription,
+  OnDeleteRoomSubscription,
   CreatePostMutationVariables,
   DeletePostMutationVariables,
   UpdateRoomMutationVariables,
+  DeleteRoomMutationVariables,
 } from "../../src/API";
 import {
   useStateValue,
   showRoom,
   updateRoomSubscription,
+  deleteRoomSubscription,
   createPostSubscription,
   deletePostSubscription,
 } from "../../src/state";
@@ -48,8 +57,12 @@ import DeleteIcon from "@material-ui/icons/Delete";
 import { updateRoom } from "../../src/graphql/mutations";
 import { RoomFormValues } from "../../components/AddRoomModal/AddRoomForm";
 
-type RoomSubscriptionEvent = { value: { data: OnUpdateRoomSubscription } };
-
+type UpdateRoomSubscriptionEvent = {
+  value: { data: OnUpdateRoomSubscription };
+};
+type deleteRoomSubscriptionEvent = {
+  value: { data: OnDeleteRoomSubscription };
+};
 type createPostSubscriptionEvent = {
   value: { data: OnCreatePostSubscription };
 };
@@ -86,6 +99,11 @@ const useStyles = makeStyles({
 
     backgroundColor: "#db2828",
     color: "#ffffff",
+  },
+  chatField: {
+    height: "40rem",
+    backgroundColor: "#fffff0",
+    overflow: "scroll",
   },
 });
 
@@ -143,9 +161,20 @@ const Home = () => {
       // @ts-ignore
       authMode: "API_KEY",
     }).subscribe({
-      next: ({ value: { data } }: RoomSubscriptionEvent) => {
+      next: ({ value: { data } }: UpdateRoomSubscriptionEvent) => {
         if (data.onUpdateRoom && data.onUpdateRoom.id === id) {
           dispatch(updateRoomSubscription(data));
+        }
+      },
+    });
+    const destroyRoomSubscription = API.graphql({
+      query: onDeleteRoom,
+      // @ts-ignore
+      authMode: "API_KEY",
+    }).subscribe({
+      next: ({ value: { data } }: deleteRoomSubscriptionEvent) => {
+        if (data.onDeleteRoom && data.onDeleteRoom.id === id) {
+          dispatch(deleteRoomSubscription(data));
         }
       },
     });
@@ -208,6 +237,18 @@ const Home = () => {
     }
   };
 
+  const deleteMyRoom = (room: GetRoom) => {
+    // await API.graphql(graphqlOperation(createPost, newRoom));
+    if (window.confirm(`${room.title}を削除しますか？`)) {
+      const killRoom: DeleteRoomMutationVariables = {
+        input: {
+          id: room.id,
+        },
+      };
+      API.graphql(graphqlOperation(deleteRoom, killRoom));
+    }
+  };
+
   const editRoom = async (values: RoomFormValues) => {
     try {
       const [id, title, description] = [
@@ -229,49 +270,60 @@ const Home = () => {
       setError(e.response.data.error);
     }
   };
+  if (!room) {
+    return (
+      <GenericTemplate title={""}>
+        <div>ルームが見つかりません</div>
+        <Link href="/" as={`/`}>
+          <div>TOPに戻る</div>
+        </Link>
+      </GenericTemplate>
+    );
+  }
   return (
     <GenericTemplate title={""}>
-      {auth?.accessTokenData?.username === room?.owner && (
-        <>
-          <UpdateRoomModal
-            modalOpen={modalOpen}
-            onSubmit={editRoom}
-            error={error}
-            onClose={closeModal}
-            room={room}
-          />
-          <div>
-            <Fab
-              size="small"
-              color="primary"
-              aria-label="edit"
-              onClick={() => openModal()}
-            >
-              <CreateIcon />
-            </Fab>
-            <Fab
-              size="small"
-              color="inherit"
-              aria-label="delete"
-              className={classes.deleteButton}
-            >
-              <DeleteIcon />
-            </Fab>
-          </div>
-        </>
-      )}
-
-      {room ? (
-        <div>
-          <Typography variant="h4" component="h2">
-            {room.title}
-          </Typography>
-          <Typography color="textSecondary">{room.description}</Typography>
+      {/* {room ? ( */}
+      <div>
+        {auth?.accessTokenData?.username === room.owner && (
+          <>
+            <UpdateRoomModal
+              modalOpen={modalOpen}
+              onSubmit={editRoom}
+              error={error}
+              onClose={closeModal}
+              room={room}
+            />
+            <div>
+              <Fab
+                size="small"
+                color="primary"
+                aria-label="edit"
+                onClick={() => openModal()}
+              >
+                <CreateIcon />
+              </Fab>
+              <Fab
+                size="small"
+                color="inherit"
+                aria-label="delete"
+                onClick={() => deleteMyRoom(room)}
+                className={classes.deleteButton}
+              >
+                <DeleteIcon />
+              </Fab>
+            </div>
+          </>
+        )}
+        <Typography variant="h4" component="h2">
+          {room.title}
+        </Typography>
+        <Typography color="textSecondary">{room.description}</Typography>
+        <div className={classes.chatField}>
           {room.posts.items.map((post) => {
             if (auth?.accessTokenData?.username === post.owner) {
               return (
                 <div className={classes.current} key={post.id}>
-                  <span>{post.owner}</span>
+                  {/* <span>{post.owner}</span> */}
                   <Chip label={post.content} className={classes.currentChat} />
                   <IconButton
                     className={classes.deleteIcon}
@@ -288,6 +340,7 @@ const Home = () => {
               return (
                 <div className={classes.other} key={post.id}>
                   <span>{post.owner}</span>
+                  <br />
                   <Chip label={post.content} />
                   <br />
                 </div>
@@ -295,10 +348,16 @@ const Home = () => {
             }
           })}
         </div>
-      ) : (
-        <p>Add some Posts!</p>
-      )}
-      {auth && (
+      </div>
+      {/* ) : (
+        <>
+          <div>ルームが見つかりません</div>
+          <Link href="/" as={`/`}>
+            <div>TOPに戻る</div>
+          </Link>
+        </>
+      )} */}
+      {auth ? (
         <>
           <div>
             <TextField
@@ -318,6 +377,8 @@ const Home = () => {
             </Button>
           </div>
         </>
+      ) : (
+        <div>ログインしてチャットに参加しよう！</div>
       )}
     </GenericTemplate>
   );
