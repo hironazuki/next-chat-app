@@ -1,6 +1,7 @@
 import React, { useEffect, useState } from "react";
 import { useRouter } from "next/router";
 import { API, graphqlOperation } from "aws-amplify";
+import { Observable } from "../../node_modules/zen-observable-ts";
 
 import { useAuth } from "../../auth";
 import Link from "../../components/templates/Link";
@@ -153,44 +154,48 @@ const Home = () => {
       fetchData();
     }
 
-    const editRoomSubscription = API.graphql({
+    const editRoomPubSubClient = API.graphql({
       query: onUpdateRoom,
       // @ts-ignore
       authMode: "API_KEY",
-    }).subscribe({
+    }) as Observable<object>;
+    const editRoomSubscription = editRoomPubSubClient.subscribe({
       next: ({ value: { data } }: UpdateRoomSubscriptionEvent) => {
         if (data.onUpdateRoom && data.onUpdateRoom.id === id) {
           dispatch(updateRoomSubscription(data));
         }
       },
     });
-    const destroyRoomSubscription = API.graphql({
+    const destroyRoomPubSubClient = API.graphql({
       query: onDeleteRoom,
       // @ts-ignore
       authMode: "API_KEY",
-    }).subscribe({
+    }) as Observable<object>;
+    const destroyRoomSubscription = destroyRoomPubSubClient.subscribe({
       next: ({ value: { data } }: deleteRoomSubscriptionEvent) => {
         if (data.onDeleteRoom && data.onDeleteRoom.id === id) {
           dispatch(deleteRoomSubscription(data));
         }
       },
     });
-    const newPostSubscription = API.graphql({
+    const newPostPubSubClient = API.graphql({
       query: onCreatePost,
       // @ts-ignore
       authMode: "API_KEY",
-    }).subscribe({
+    }) as Observable<object>;
+    const newPostSubscription = newPostPubSubClient.subscribe({
       next: ({ value: { data } }: createPostSubscriptionEvent) => {
         if (data.onCreatePost && data.onCreatePost.roomID === id) {
           dispatch(createPostSubscription(data));
         }
       },
     });
-    const destroyPostSubscription = API.graphql({
+    const destroyPostPubSubClient = API.graphql({
       query: onDeletePost,
       // @ts-ignore
       authMode: "API_KEY",
-    }).subscribe({
+    }) as Observable<object>;
+    const destroyPostSubscription = destroyPostPubSubClient.subscribe({
       next: ({ value: { data } }: deletePostSubscriptionEvent) => {
         if (data.onDeletePost) {
           dispatch(deletePostSubscription(data));

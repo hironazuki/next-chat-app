@@ -1,4 +1,5 @@
 import React, { useEffect, useState } from "react";
+import { Observable } from "./../node_modules/zen-observable-ts";
 import { API, graphqlOperation } from "aws-amplify";
 import { GetServerSideProps } from "next";
 import {
@@ -105,11 +106,12 @@ const Home = (props: { initialAuth: AuthTokens }) => {
       }
     }
     fetchData();
-    const subscription = API.graphql({
+    const pubSubClient = API.graphql({
       query: onCreateRoom,
       // @ts-ignore
       authMode: "API_KEY",
-    }).subscribe({
+    }) as Observable<object>;
+    const subscription = pubSubClient.subscribe({
       next: ({ value: { data } }: RoomSubscriptionEvent) => {
         if (data.onCreateRoom) {
           dispatch(createRoomSubscription(data));
