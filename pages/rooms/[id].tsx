@@ -5,6 +5,10 @@ import { API, graphqlOperation } from "aws-amplify";
 import { useAuth } from "../../auth";
 import Link from "../../components/templates/Link";
 
+import { Field, Formik, Form } from "formik";
+import { TextField } from "../../components/AddRoomModal/FormField";
+import { Grid, Button } from "semantic-ui-react";
+
 import {
   createPost,
   deletePost,
@@ -43,8 +47,6 @@ import UpdateRoomModal from "../../components/UpdateRoomModal";
 
 import GenericTemplate from "../../components/templates/GenericTemplate";
 import { makeStyles } from "@material-ui/core/styles";
-import TextField from "@material-ui/core/TextField";
-import Button from "@material-ui/core/Button";
 
 import Typography from "@material-ui/core/Typography";
 import Chip from "@material-ui/core/Chip";
@@ -53,6 +55,7 @@ import IconButton from "@material-ui/core/IconButton";
 import CancelIcon from "@material-ui/icons/Cancel";
 import CreateIcon from "@material-ui/icons/Create";
 import DeleteIcon from "@material-ui/icons/Delete";
+import SendIcon from "@material-ui/icons/Send";
 
 import { updateRoom } from "../../src/graphql/mutations";
 import { RoomFormValues } from "../../components/AddRoomModal/AddRoomForm";
@@ -68,9 +71,6 @@ type createPostSubscriptionEvent = {
 };
 type deletePostSubscriptionEvent = {
   value: { data: OnDeletePostSubscription };
-};
-type FormState = {
-  content: string;
 };
 
 const useStyles = makeStyles({
@@ -110,9 +110,6 @@ const useStyles = makeStyles({
 const Home = () => {
   const auth = useAuth(null);
   const [{ room }, dispatch] = useStateValue();
-  const [input, setInput] = useState<FormState>({
-    content: "",
-  });
   const [id, setId] = useState<string>();
   const [modalOpen, setModalOpen] = useState<boolean>(false);
   const [error, setError] = useState<string | undefined>();
@@ -203,30 +200,13 @@ const Home = () => {
     return async () => {
       // Clean up the subscription
       await editRoomSubscription.unsubscribe();
+      await destroyRoomSubscription.unsubscribe();
       await newPostSubscription.unsubscribe();
       await destroyPostSubscription.unsubscribe();
     };
   }, [id]);
-  const onFormChange = ({
-    target: { name, value },
-  }: React.ChangeEvent<HTMLInputElement>) => {
-    setInput((prev) => ({ ...prev, [name]: value }));
-  };
-
-  const createNewPost = async () => {
-    if (input.content === "") return;
-    const newPost: CreatePostMutationVariables = {
-      input: {
-        roomID: id,
-        content: input.content,
-      },
-    };
-    setInput({ content: "" });
-    await API.graphql(graphqlOperation(createPost, newPost));
-  };
 
   const deleteMyPost = (post: Post) => {
-    // await API.graphql(graphqlOperation(createPost, newRoom));
     if (window.confirm(`${post.content}を削除しますか？`)) {
       const killPost: DeletePostMutationVariables = {
         input: {
@@ -282,7 +262,6 @@ const Home = () => {
   }
   return (
     <GenericTemplate title={""}>
-      {/* {room ? ( */}
       <div>
         {auth?.accessTokenData?.username === room.owner && (
           <>
@@ -323,7 +302,6 @@ const Home = () => {
             if (auth?.accessTokenData?.username === post.owner) {
               return (
                 <div className={classes.current} key={post.id}>
-                  {/* <span>{post.owner}</span> */}
                   <Chip label={post.content} className={classes.currentChat} />
                   <IconButton
                     className={classes.deleteIcon}
@@ -349,33 +327,63 @@ const Home = () => {
           })}
         </div>
       </div>
-      {/* ) : (
-        <>
-          <div>ルームが見つかりません</div>
-          <Link href="/" as={`/`}>
-            <div>TOPに戻る</div>
-          </Link>
-        </>
-      )} */}
       {auth ? (
         <>
-          <div>
-            <TextField
-              value={input.content}
-              label="チャット"
-              name="content"
-              fullWidth
-              onChange={onFormChange}
-            />
-            <Button
-              onClick={createNewPost}
-              variant="contained"
-              color="primary"
-              style={{ float: "right" }}
-            >
-              送信
-            </Button>
-          </div>
+          <Formik
+            initialValues={{
+              content: "",
+            }}
+            onSubmit={async (values, { resetForm }) => {
+              try {
+                const [content] = [values.content];
+                const newPost: CreatePostMutationVariables = {
+                  input: {
+                    roomID: id,
+                    content: content,
+                  },
+                };
+                resetForm();
+                await API.graphql(graphqlOperation(createPost, newPost));
+              } catch (e) {
+                console.error(e.response.data);
+                setError(e.response.data.error);
+              }
+            }}
+            validate={(values) => {
+              const requiredError = "Field is required";
+              const errors: { [field: string]: string } = {};
+              if (!values.content) {
+                errors.name = requiredError;
+              }
+              return errors;
+            }}
+          >
+            {({ isValid, dirty }) => {
+              return (
+                <Form className="form ui">
+                  <Field
+                    // label="Content"
+                    // placeholder="Content"
+                    name="content"
+                    component={TextField}
+                  />
+                  <Grid>
+                    <Grid.Column floated="right" width={5}>
+                      <Button
+                        type="submit"
+                        floated="right"
+                        color="green"
+                        disabled={!dirty || !isValid}
+                      >
+                        {/* Add */}
+                        <SendIcon />
+                      </Button>
+                    </Grid.Column>
+                  </Grid>
+                </Form>
+              );
+            }}
+          </Formik>
         </>
       ) : (
         <div>ログインしてチャットに参加しよう！</div>
