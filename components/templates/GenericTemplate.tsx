@@ -241,9 +241,9 @@ const GenericTemplate: React.FC<GenericTemplateProps> = ({
               {title}
             </Typography>
             {children}
-            <Box pt={4}>
+            {/* <Box pt={4}>
               <Copyright />
-            </Box>
+            </Box> */}
           </Container>
         </main>
       </div>

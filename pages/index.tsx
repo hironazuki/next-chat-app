@@ -1,4 +1,5 @@
 import React, { useEffect, useState } from "react";
+import { Observable } from "./../node_modules/zen-observable-ts";
 import { API, graphqlOperation } from "aws-amplify";
 import { GetServerSideProps } from "next";
 import {
@@ -17,44 +18,71 @@ import {
   OnCreateRoomSubscription,
   CreateRoomMutationVariables,
 } from "../src/API";
+import { RoomFormValues } from "../components/AddRoomModal/AddRoomForm";
 import {
   useStateValue,
   setRoomsList,
   createRoomSubscription,
 } from "../src/state";
 
+import AddRoomModal from "../components/AddRoomModal";
+
 import GenericTemplate from "../components/templates/GenericTemplate";
 import { makeStyles } from "@material-ui/core/styles";
-import Table from "@material-ui/core/Table";
-import TableBody from "@material-ui/core/TableBody";
-import TableCell from "@material-ui/core/TableCell";
-import TableContainer from "@material-ui/core/TableContainer";
-import TableHead from "@material-ui/core/TableHead";
-import TableRow from "@material-ui/core/TableRow";
-import Paper from "@material-ui/core/Paper";
-import TextField from "@material-ui/core/TextField";
-import Button from "@material-ui/core/Button";
+
+import Grid from "@material-ui/core/Grid";
+import Card from "@material-ui/core/Card";
+import CardContent from "@material-ui/core/CardContent";
+import Typography from "@material-ui/core/Typography";
+
+import Fab from "@material-ui/core/Fab";
+import AddIcon from "@material-ui/icons/Add";
+
 import Link from "../components/templates/Link";
 
 type RoomSubscriptionEvent = { value: { data: OnCreateRoomSubscription } };
-type FormState = {
-  title: string;
-  description: string;
-};
 
 const useStyles = makeStyles({
-  table: {
-    minWidth: 650,
+  card: {
+    minWidth: 275,
+  },
+  bullet: {
+    display: "inline-block",
+    margin: "0 2px",
+    transform: "scale(0.8)",
+  },
+  title: {
+    fontSize: 14,
+  },
+  pos: {
+    marginBottom: 12,
+  },
+  AddIcon: {
+    "& > *": {
+      margin: 0,
+      top: "auto",
+      right: 20,
+      bottom: 20,
+      left: "auto",
+      position: "fixed",
+      color: "#ffffff",
+    },
   },
 });
 
 const Home = (props: { initialAuth: AuthTokens }) => {
   const auth = useAuth(props.initialAuth);
   const [{ rooms }, dispatch] = useStateValue();
-  const [input, setInput] = useState<FormState>({
-    title: "",
-    description: "",
-  });
+  const [modalOpen, setModalOpen] = useState<boolean>(false);
+  const [error, setError] = useState<string | undefined>();
+  const openModal = (): void => {
+    setModalOpen(true);
+  };
+
+  const closeModal = (): void => {
+    setModalOpen(false);
+    setError(undefined);
+  };
 
   const classes = useStyles();
 
@@ -68,6 +96,7 @@ const Home = (props: { initialAuth: AuthTokens }) => {
         });
         if ("data" in roomsData && roomsData.data) {
           const rooms = roomsData.data as ListRoomsQuery;
+          console.log(rooms.listRooms);
           if (rooms.listRooms) {
             dispatch(setRoomsList(rooms));
           }
@@ -77,92 +106,91 @@ const Home = (props: { initialAuth: AuthTokens }) => {
       }
     }
     fetchData();
-    const subscription = API.graphql({
+    const pubSubClient = API.graphql({
       query: onCreateRoom,
       // @ts-ignore
       authMode: "API_KEY",
+    }) as Observable<object>;
+    const subscription = pubSubClient.subscribe({
+      next: ({ value: { data } }: RoomSubscriptionEvent) => {
+        if (data.onCreateRoom) {
+          dispatch(createRoomSubscription(data));
+        }
+      },
     });
-    if ("subscribe" in subscription) {
-      subscription.subscribe({
-        next: ({ value: { data } }: RoomSubscriptionEvent) => {
-          if (data.onCreateRoom) {
-            dispatch(createRoomSubscription(data));
-          }
-        },
-      });
-    }
-    // return () => subscription.unsubscribe();
+    return () => subscription.unsubscribe();
   }, []);
 
-  const onFormChange = ({
-    target: { name, value },
-  }: React.ChangeEvent<HTMLInputElement>) => {
-    setInput((prev) => ({ ...prev, [name]: value }));
-  };
-
-  const createNewRoom = async () => {
-    if (input.title === "") return;
-    const newRoom: CreateRoomMutationVariables = {
-      input: {
-        title: input.title,
-        description: input.description,
-      },
-    };
-    setInput({ title: "", description: "" });
-    await API.graphql(graphqlOperation(createRoom, newRoom));
+  const createNewRoom = async (values: RoomFormValues) => {
+    try {
+      const [title, description] = [values.title, values.description];
+      const newRoom: CreateRoomMutationVariables = {
+        input: {
+          title,
+          description,
+        },
+      };
+      closeModal();
+      await API.graphql(graphqlOperation(createRoom, newRoom));
+    } catch (e) {
+      console.error(e.response.data);
+      setError(e.response.data.error);
+    }
   };
   return (
     <GenericTemplate title="チャットルーム">
       {auth && (
         <>
-          <div>
-            <TextField
-              value={input.title}
-              label="ルーム名"
-              name="title"
-              onChange={onFormChange}
-            />
+          <AddRoomModal
+            modalOpen={modalOpen}
+            onSubmit={createNewRoom}
+            error={error}
+            onClose={closeModal}
+          />
+          <div className={classes.AddIcon}>
+            <Fab color="secondary" aria-label="add" onClick={() => openModal()}>
+              <AddIcon />
+            </Fab>
           </div>
-          <div>
-            <TextField
-              value={input.description}
-              label="説明"
-              name="description"
-              onChange={onFormChange}
-            />
-          </div>
-          <Button onClick={createNewRoom} variant="contained" color="primary">
-            追加
-          </Button>
         </>
       )}
       {rooms.length > 0 ? (
-        <TableContainer component={Paper}>
-          <Table className={classes.table} aria-label="simple table">
-            <TableHead>
-              <TableRow>
-                <TableCell align="justify">ルーム名</TableCell>
-                <TableCell>説明</TableCell>
-                <TableCell>作成者</TableCell>
-                {/* <TableCell>作成日</TableCell> */}
-              </TableRow>
-            </TableHead>
-            <TableBody>
-              {rooms.map((room) => (
-                <TableRow key={room.id}>
-                  <TableCell component="th" scope="room">
-                    <Link href="/rooms/[id]" as={`/rooms/${room.id}`}>
+        <Grid container spacing={2}>
+          {rooms.map((room) => (
+            <Grid item xs={12} md={6} key={room.id}>
+              <Link href="/rooms/[id]" as={`/rooms/${room.id}`}>
+                <Card className={classes.card}>
+                  <CardContent>
+                    <Typography
+                      className={classes.title}
+                      color="textSecondary"
+                      gutterBottom
+                    >
+                      createBy {room.owner}
+                    </Typography>
+                    <Typography variant="h5" component="h2">
                       {room.title}
-                    </Link>
-                  </TableCell>
-                  <TableCell>{room.description}</TableCell>
-                  <TableCell>{room.owner}</TableCell>
-                  {/* <TableCell>{room.createdAt}</TableCell> */}
-                </TableRow>
-              ))}
-            </TableBody>
-          </Table>
-        </TableContainer>
+                    </Typography>
+                    <Typography className={classes.pos} color="textSecondary">
+                      {room.description}
+                    </Typography>
+                  </CardContent>
+
+                  {/* {auth?.accessTokenData?.username === room.owner && (
+                  <CardActions>
+                    <IconButton edge="end" aria-label="update">
+                      <CreateIcon />
+                    </IconButton>
+                    <IconButton edge="end" aria-label="delete">
+                      <DeleteIcon />
+                    </IconButton>
+                  </CardActions>
+                )} */}
+                </Card>
+              </Link>
+            </Grid>
+          ))}
+        </Grid>
       ) : (
         <p>Add some Rooms!</p>
       )}
