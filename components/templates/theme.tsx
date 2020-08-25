@@ -22,6 +22,7 @@ const theme = createMuiTheme({
   },
   palette: {
     primary: { main: colors.blue[500] }, // テーマの色
+    secondary: { main: "#21ba45" },
   },
 });
 export default theme;
