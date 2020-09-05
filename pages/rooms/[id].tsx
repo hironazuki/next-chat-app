@@ -1,4 +1,6 @@
 import React, { useEffect, useState } from "react";
+import Head from "next/head";
+
 import { useRouter } from "next/router";
 import { API, graphqlOperation } from "aws-amplify";
 import { Observable } from "../../node_modules/zen-observable-ts";
@@ -257,143 +259,156 @@ const Home = () => {
   };
   if (!room) {
     return (
-      <GenericTemplate title={""}>
-        <div>ルームが見つかりません</div>
-        <Link href="/" as={`/`}>
-          <div>TOPに戻る</div>
-        </Link>
-      </GenericTemplate>
+      <>
+        <Head>
+          <title>ルームが見つかりません | next-chat-app</title>
+        </Head>
+        <GenericTemplate title={""}>
+          <div>ルームが見つかりません</div>
+          <Link href="/" as={`/`}>
+            <div>TOPに戻る</div>
+          </Link>
+        </GenericTemplate>
+      </>
     );
   }
   return (
-    <GenericTemplate title={""}>
-      <div>
-        {auth?.accessTokenData?.username === room.owner && (
-          <>
-            <UpdateRoomModal
-              modalOpen={modalOpen}
-              onSubmit={editRoom}
-              error={error}
-              onClose={closeModal}
-              room={room}
-            />
-            <div>
-              <Fab
-                size="small"
-                color="primary"
-                aria-label="edit"
-                onClick={() => openModal()}
-              >
-                <CreateIcon />
-              </Fab>
-              <Fab
-                size="small"
-                color="inherit"
-                aria-label="delete"
-                onClick={() => deleteMyRoom(room)}
-                className={classes.deleteButton}
-              >
-                <DeleteIcon />
-              </Fab>
-            </div>
-          </>
-        )}
-        <Typography variant="h4" component="h2">
-          {room.title}
-        </Typography>
-        <Typography color="textSecondary">{room.description}</Typography>
-        <div className={classes.chatField}>
-          {room.posts.items.map((post) => {
-            if (auth?.accessTokenData?.username === post.owner) {
-              return (
-                <div className={classes.current} key={post.id}>
-                  <Chip label={post.content} className={classes.currentChat} />
-                  <IconButton
-                    className={classes.deleteIcon}
-                    onClick={() => {
-                      deleteMyPost(post);
-                    }}
-                  >
-                    <CancelIcon />
-                  </IconButton>
-                  <br />
-                </div>
-              );
-            } else {
-              return (
-                <div className={classes.other} key={post.id}>
-                  <span>{post.owner}</span>
-                  <br />
-                  <Chip label={post.content} />
-                  <br />
-                </div>
-              );
-            }
-          })}
+    <>
+      <Head>
+        <title>{room.title} | next-chat-app</title>
+      </Head>
+      <GenericTemplate title={""}>
+        <div>
+          {auth?.accessTokenData?.username === room.owner && (
+            <>
+              <UpdateRoomModal
+                modalOpen={modalOpen}
+                onSubmit={editRoom}
+                error={error}
+                onClose={closeModal}
+                room={room}
+              />
+              <div>
+                <Fab
+                  size="small"
+                  color="primary"
+                  aria-label="edit"
+                  onClick={() => openModal()}
+                >
+                  <CreateIcon />
+                </Fab>
+                <Fab
+                  size="small"
+                  color="inherit"
+                  aria-label="delete"
+                  onClick={() => deleteMyRoom(room)}
+                  className={classes.deleteButton}
+                >
+                  <DeleteIcon />
+                </Fab>
+              </div>
+            </>
+          )}
+          <Typography variant="h4" component="h2">
+            {room.title}
+          </Typography>
+          <Typography color="textSecondary">{room.description}</Typography>
+          <div className={classes.chatField}>
+            {room.posts.items.map((post) => {
+              if (auth?.accessTokenData?.username === post.owner) {
+                return (
+                  <div className={classes.current} key={post.id}>
+                    <Chip
+                      label={post.content}
+                      className={classes.currentChat}
+                    />
+                    <IconButton
+                      className={classes.deleteIcon}
+                      onClick={() => {
+                        deleteMyPost(post);
+                      }}
+                    >
+                      <CancelIcon />
+                    </IconButton>
+                    <br />
+                  </div>
+                );
+              } else {
+                return (
+                  <div className={classes.other} key={post.id}>
+                    <span>{post.owner}</span>
+                    <br />
+                    <Chip label={post.content} />
+                    <br />
+                  </div>
+                );
+              }
+            })}
+          </div>
         </div>
-      </div>
-      {auth ? (
-        <>
-          <Formik
-            initialValues={{
-              content: "",
-            }}
-            onSubmit={async (values, { resetForm }) => {
-              try {
-                const [content] = [values.content];
-                const newPost: CreatePostMutationVariables = {
-                  input: {
-                    roomID: id,
-                    content: content,
-                  },
-                };
-                resetForm();
-                await API.graphql(graphqlOperation(createPost, newPost));
-              } catch (e) {
-                console.error(e.response.data);
-                setError(e.response.data.error);
-              }
-            }}
-            validate={(values) => {
-              const requiredError = "Field is required";
-              const errors: { [field: string]: string } = {};
-              if (!values.content) {
-                errors.name = requiredError;
-              }
-              return errors;
-            }}
-          >
-            {({ isValid, dirty }) => {
-              return (
-                <Form className="form ui">
-                  <Field
-                    // label="Content"
-                    // placeholder="Content"
-                    name="content"
-                    component={TextField}
-                  />
-                  <Grid>
-                    <Grid.Column floated="right" width={5}>
-                      <Button
-                        type="submit"
-                        floated="right"
-                        color="green"
-                        disabled={!dirty || !isValid}
-                      >
-                        {/* Add */}
-                        <SendIcon />
-                      </Button>
-                    </Grid.Column>
-                  </Grid>
-                </Form>
-              );
-            }}
-          </Formik>
-        </>
-      ) : (
-        <div>ログインしてチャットに参加しよう！</div>
-      )}
-    </GenericTemplate>
+        {auth ? (
+          <>
+            <Formik
+              initialValues={{
+                content: "",
+              }}
+              onSubmit={async (values, { resetForm }) => {
+                try {
+                  const [content] = [values.content];
+                  const newPost: CreatePostMutationVariables = {
+                    input: {
+                      roomID: id,
+                      content: content,
+                    },
+                  };
+                  resetForm();
+                  await API.graphql(graphqlOperation(createPost, newPost));
+                } catch (e) {
+                  console.error(e.response.data);
+                  setError(e.response.data.error);
+                }
+              }}
+              validate={(values) => {
+                const requiredError = "Field is required";
+                const errors: { [field: string]: string } = {};
+                if (!values.content) {
+                  errors.name = requiredError;
+                }
+                return errors;
+              }}
+            >
+              {({ isValid, dirty }) => {
+                return (
+                  <Form className="form ui">
+                    <Field
+                      // label="Content"
+                      // placeholder="Content"
+                      name="content"
+                      component={TextField}
+                    />
+                    <Grid>
+                      <Grid.Column floated="right" width={5}>
+                        <Button
+                          type="submit"
+                          floated="right"
+                          color="green"
+                          disabled={!dirty || !isValid}
+                        >
+                          {/* Add */}
+                          <SendIcon />
+                        </Button>
+                      </Grid.Column>
+                    </Grid>
+                  </Form>
+                );
+              }}
+            </Formik>
+          </>
+        ) : (
+          <div>ログインしてチャットに参加しよう！</div>
+        )}
+      </GenericTemplate>
+    </>
   );
 };
 

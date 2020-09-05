@@ -1,4 +1,6 @@
 import React, { useEffect, useState } from "react";
+import Head from "next/head";
+
 import { Observable } from "./../node_modules/zen-observable-ts";
 import { API, graphqlOperation } from "aws-amplify";
 import { GetServerSideProps } from "next";
@@ -138,45 +140,53 @@ const Home = (props: { initialAuth: AuthTokens }) => {
     }
   };
   return (
-    <GenericTemplate title="チャットルーム">
-      {auth && (
-        <>
-          <AddRoomModal
-            modalOpen={modalOpen}
-            onSubmit={createNewRoom}
-            error={error}
-            onClose={closeModal}
-          />
-          <div className={classes.AddIcon}>
-            <Fab color="secondary" aria-label="add" onClick={() => openModal()}>
-              <AddIcon />
-            </Fab>
-          </div>
-        </>
-      )}
-      {rooms.length > 0 ? (
-        <Grid container spacing={2}>
-          {rooms.map((room) => (
-            <Grid item xs={12} md={6} key={room.id}>
-              <Link href="/rooms/[id]" as={`/rooms/${room.id}`}>
-                <Card className={classes.card}>
-                  <CardContent>
-                    <Typography
-                      className={classes.title}
-                      color="textSecondary"
-                      gutterBottom
-                    >
-                      createBy {room.owner}
-                    </Typography>
-                    <Typography variant="h5" component="h2">
-                      {room.title}
-                    </Typography>
-                    <Typography className={classes.pos} color="textSecondary">
-                      {room.description}
-                    </Typography>
-                  </CardContent>
+    <>
+      <Head>
+        <title>ルーム一覧 | next-chat-app</title>
+      </Head>
+      <GenericTemplate title="チャットルーム">
+        {auth && (
+          <>
+            <AddRoomModal
+              modalOpen={modalOpen}
+              onSubmit={createNewRoom}
+              error={error}
+              onClose={closeModal}
+            />
+            <div className={classes.AddIcon}>
+              <Fab
+                color="secondary"
+                aria-label="add"
+                onClick={() => openModal()}
+              >
+                <AddIcon />
+              </Fab>
+            </div>
+          </>
+        )}
+        {rooms.length > 0 ? (
+          <Grid container spacing={2}>
+            {rooms.map((room) => (
+              <Grid item xs={12} md={6} key={room.id}>
+                <Link href="/rooms/[id]" as={`/rooms/${room.id}`}>
+                  <Card className={classes.card}>
+                    <CardContent>
+                      <Typography
+                        className={classes.title}
+                        color="textSecondary"
+                        gutterBottom
+                      >
+                        createBy {room.owner}
+                      </Typography>
+                      <Typography variant="h5" component="h2">
+                        {room.title}
+                      </Typography>
+                      <Typography className={classes.pos} color="textSecondary">
+                        {room.description}
+                      </Typography>
+                    </CardContent>
 
-                  {/* {auth?.accessTokenData?.username === room.owner && (
+                    {/* {auth?.accessTokenData?.username === room.owner && (
                   <CardActions>
                     <IconButton edge="end" aria-label="update">
                       <CreateIcon />
@@ -186,15 +196,16 @@ const Home = (props: { initialAuth: AuthTokens }) => {
                     </IconButton>
                   </CardActions>
                 )} */}
-                </Card>
-              </Link>
-            </Grid>
-          ))}
-        </Grid>
-      ) : (
-        <p>Add some Rooms!</p>
-      )}
-    </GenericTemplate>
+                  </Card>
+                </Link>
+              </Grid>
+            ))}
+          </Grid>
+        ) : (
+          <p>Add some Rooms!</p>
+        )}
+      </GenericTemplate>
+    </>
   );
 };
 
