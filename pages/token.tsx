@@ -4,10 +4,21 @@ import { useRouter } from "next/router";
 import { useAuthRedirect } from "aws-cognito-next";
 import queryString from "query-string";
 
+import { makeStyles } from "@material-ui/core/styles";
+import CircularProgress from "@material-ui/core/CircularProgress";
+
 const extractFirst = (value: string | string[]) => {
   return Array.isArray(value) ? value[0] : value;
 };
 
+const useStyles = makeStyles((theme) => ({
+  root: {
+    height: "10em",
+    display: "flex",
+    alignItems: "center",
+    justifyContent: "center",
+  },
+}));
 // When a user comes back from authenticating, the url looks like this:
 //   /token#id_token=....
 // At this point, there will be no cookies yet. If we would render any page on
@@ -19,6 +30,7 @@ const extractFirst = (value: string | string[]) => {
 // the necessary cookies ready.
 export default function TokenSetter() {
   const router = useRouter();
+  const classes = useStyles();
   useAuthRedirect(() => {
     // We are not using the router here, since the query object will be empty
     // during prerendering if the page is statically optimized.
@@ -29,5 +41,9 @@ export default function TokenSetter() {
     router.replace(redirectUriAfterSignIn);
   });
 
-  return <p>loading..</p>;
+  return (
+    <div className={classes.root}>
+      <CircularProgress />
+    </div>
+  );
 }
