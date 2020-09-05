@@ -1,30 +1,72 @@
-This is a [Next.js](https://nextjs.org/) project bootstrapped with [`create-next-app`](https://github.com/vercel/next.js/tree/canary/packages/create-next-app).
+# 目次
 
-## Getting Started
+- 概要
+- 利用技術と内容
+- この課題を通して学んだこと
+- 苦労した点, 改善点
+- 参考
 
-First, run the development server:
+# 概要
 
-```bash
-npm run dev
-# or
-yarn dev
-```
+![chat_app](https://user-images.githubusercontent.com/43399066/92310638-4740bf00-efeb-11ea-8659-228603429927.png)
 
-Open [http://localhost:3000](http://localhost:3000) with your browser to see the result.
+- バックエンド: aws Amplify での実装
+- フロントエンド： Appsync subsciription によるリアルタイムチャットアプリを Next.js で実装
 
-You can start editing the page by modifying `pages/index.js`. The page auto-updates as you edit the file.
+## Web ページ
 
-## Learn More
+username: testuser
+password: password でテストログインできます
 
-To learn more about Next.js, take a look at the following resources:
+https://next-chat-app.vercel.app/
 
-- [Next.js Documentation](https://nextjs.org/docs) - learn about Next.js features and API.
-- [Learn Next.js](https://nextjs.org/learn) - an interactive Next.js tutorial.
+# 利用技術と内容
 
-You can check out [the Next.js GitHub repository](https://github.com/vercel/next.js/) - your feedback and contributions are welcome!
+## フロントエンド
 
-## Deploy on Vercel
+- 利用技術
 
-The easiest way to deploy your Next.js app is to use the [Vercel Platform](https://vercel.com/import?utm_medium=default-template&filter=next.js&utm_source=create-next-app&utm_campaign=create-next-app-readme) from the creators of Next.js.
+  - react 16.13.1
+  - Next.js 9.5.1
+  - Typescript 3.9.7
 
-Check out our [Next.js deployment documentation](https://nextjs.org/docs/deployment) for more details.
+- 内容
+
+  - Appsync subsciription によるリアルタイムチャット
+    ![chat](https://user-images.githubusercontent.com/43399066/92310620-25473c80-efeb-11ea-9f7d-e01891fdc7c8.gif)
+
+  - aws-cognito-next によるタブ感でのログイン状態の同期
+    ![login](https://user-images.githubusercontent.com/43399066/92310617-1d879800-efeb-11ea-909f-57b0c1c5622b.gif)
+
+  - useReducer によるステート管理
+
+## バックエンド
+
+- 利用技術
+
+  - aws Amplify
+
+- 内容
+
+  - Amplify によるサーバーサイドの作成(auth: cognito, api: Appsync)
+
+# この課題を通して学んだこと
+
+- amplify の基本的な使用方法 aws サービスの学習
+- appsync api との連携
+
+# 苦労した点
+
+- appsync と Typescript を併用するのに苦労した
+
+# 改善点
+
+- 適切なファイル分割によるリファクタリング
+- スマホサイズだとモーダルが隠れてしまう
+- チャットが増えたときの過去のチャットの読み込み
+
+# 参考
+
+- [amplify Docs](https://docs.amplify.aws/lib/graphqlapi/getting-started/q/platform/js)
+- [Authentication in Next.js using Amazon Cognito](https://medium.com/frontend-digest/authentication-in-next-js-using-amazon-cognito-f30efed6a24f)
+- [Observable type would be better to export from '@aws-amplify/api'](https://github.com/aws-amplify/amplify-js/issues/5741)
