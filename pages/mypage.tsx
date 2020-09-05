@@ -10,7 +10,11 @@ const MyPage = () => {
   return (
     <>
       <Head>
-        <title>{auth.accessTokenData.username} | next-chat-app</title>
+        {auth ? (
+          <title>{auth.accessTokenData.username} | next-chat-app</title>
+        ) : (
+          <title>ログインしてください | next-chat-app</title>
+        )}
       </Head>
       <GenericTemplate title="マイページ">
         {auth ? (
