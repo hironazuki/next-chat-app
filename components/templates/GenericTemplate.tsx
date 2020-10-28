@@ -4,7 +4,6 @@ import { makeStyles, createStyles, Theme } from "@material-ui/core/styles";
 import { ThemeProvider } from "@material-ui/styles";
 import CssBaseline from "@material-ui/core/CssBaseline";
 import Drawer from "@material-ui/core/Drawer";
-import Box from "@material-ui/core/Box";
 import AppBar from "@material-ui/core/AppBar";
 import Toolbar from "@material-ui/core/Toolbar";
 import List from "@material-ui/core/List";
@@ -127,7 +126,7 @@ const GenericTemplate: React.FC<GenericTemplateProps> = ({
   const { login, logout } = useAuthFunctions();
 
   const classes = useStyles();
-  const [open, setOpen] = React.useState(true);
+  const [open, setOpen] = React.useState(false);
   const handleDrawerOpen = () => {
     setOpen(true);
   };
