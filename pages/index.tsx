@@ -12,19 +12,23 @@ import {
 } from "../auth";
 
 import { createRoom } from "../src/graphql/mutations";
-import { onCreateRoom } from "../src/graphql/subscriptions";
+import { onCreateRoom, onUpdateRoom, onDeleteRoom } from "../src/graphql/subscriptions";
 import { listRooms } from "../src/graphql/queries";
 
 import {
   ListRoomsQuery,
   OnCreateRoomSubscription,
+  OnUpdateRoomSubscription,
+  OnDeleteRoomSubscription,
   CreateRoomMutationVariables,
 } from "../src/API";
 import { RoomFormValues } from "../components/AddRoomModal/AddRoomForm";
 import {
   useStateValue,
   setRoomsList,
-  createRoomSubscription,
+  createRoomsSubscription,
+  updateRoomsSubscription,
+  deleteRoomsSubscription,
 } from "../src/state";
 
 import AddRoomModal from "../components/AddRoomModal";
@@ -42,7 +46,9 @@ import AddIcon from "@material-ui/icons/Add";
 
 import Link from "../components/templates/Link";
 
-type RoomSubscriptionEvent = { value: { data: OnCreateRoomSubscription } };
+type CreateRoomSubscriptionEvent = { value: { data: OnCreateRoomSubscription } };
+type UpdateRoomSubscriptionEvent = { value: { data: OnUpdateRoomSubscription } };
+type DeleteRoomSubscriptionEvent = { value: { data: OnDeleteRoomSubscription } };
 
 const useStyles = makeStyles({
   card: {
@@ -108,19 +114,51 @@ const Home = (props: { initialAuth: AuthTokens }) => {
       }
     }
     fetchData();
-    const pubSubClient = API.graphql({
+    const createRoomsPubSubClient = API.graphql({
       query: onCreateRoom,
       // @ts-ignore
       authMode: "API_KEY",
     }) as Observable<object>;
-    const subscription = pubSubClient.subscribe({
-      next: ({ value: { data } }: RoomSubscriptionEvent) => {
+    const newRoomsSubscription = createRoomsPubSubClient.subscribe({
+      next: ({ value: { data } }: CreateRoomSubscriptionEvent) => {
         if (data.onCreateRoom) {
-          dispatch(createRoomSubscription(data));
+          dispatch(createRoomsSubscription(data));
         }
       },
     });
-    return () => subscription.unsubscribe();
+    const editRoomsPubSubClient = API.graphql({
+      query: onUpdateRoom,
+      // @ts-ignore
+      authMode: "API_KEY",
+    }) as Observable<object>;
+    const editRoomsSubscription = editRoomsPubSubClient.subscribe({
+      next: ({ value: { data } }: UpdateRoomSubscriptionEvent) => {
+        if (data.onUpdateRoom) {
+          dispatch(updateRoomsSubscription(data));
+        }
+      },
+    });
+
+    const destroyRoomsPubSubClient = API.graphql({
+      query: onDeleteRoom,
+      // @ts-ignore
+      authMode: "API_KEY",
+    }) as Observable<object>;
+    const destroyRoomsSubscription = destroyRoomsPubSubClient.subscribe({
+      next: ({ value: { data } }: DeleteRoomSubscriptionEvent) => {
+        if (data.onDeleteRoom) {
+          dispatch(deleteRoomsSubscription(data));
+        }
+      },
+    });
+
+    
+    return async () => {
+      // Clean up the subscription
+      await newRoomsSubscription.unsubscribe();
+      await editRoomsSubscription.unsubscribe();
+      await destroyRoomsSubscription.unsubscribe();
+    };
   }, []);
 
   const createNewRoom = async (values: RoomFormValues) => {

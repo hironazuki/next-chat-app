@@ -68,7 +68,7 @@ export const UpdateRoomForm: React.FC<Props> = ({
                   color="green"
                   disabled={!dirty || !isValid}
                 >
-                  Add
+                  Edit
                 </Button>
               </Grid.Column>
             </Grid>
