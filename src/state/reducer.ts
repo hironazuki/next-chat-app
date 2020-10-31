@@ -15,8 +15,16 @@ export type Action =
       payload: ListRoomsQuery;
     }
   | {
-      type: "ON_CREATE_ROOM_SUBSCRIPTION";
+      type: "ON_CREATE_ROOMS_SUBSCRIPTION";
       payload: OnCreateRoomSubscription;
+    }
+  | {
+      type: "ON_UPDATE_ROOMS_SUBSCRIPTION";
+      payload: OnUpdateRoomSubscription;
+    }
+  | {
+      type: "ON_DELETE_ROOMS_SUBSCRIPTION";
+      payload: OnDeleteRoomSubscription;
     }
   | {
       type: "ON_UPDATE_ROOM_SUBSCRIPTION";
@@ -43,8 +51,12 @@ export const reducer = (state: State, action: Action): State => {
   switch (action.type) {
     case "SET_ROOMS_LIST":
       return { ...state, rooms: action.payload.listRooms.items };
-    case "ON_CREATE_ROOM_SUBSCRIPTION":
+    case "ON_CREATE_ROOMS_SUBSCRIPTION":
       return { ...state, rooms: [action.payload.onCreateRoom, ...state.rooms] };
+    case "ON_UPDATE_ROOMS_SUBSCRIPTION":
+      return { ...state, rooms: state.rooms.map(room => room.id === action.payload.onUpdateRoom.id ? action.payload.onUpdateRoom : room)}
+    case "ON_DELETE_ROOMS_SUBSCRIPTION":
+      return { ...state, rooms: state.rooms.filter(room => room.id !== action.payload.onDeleteRoom.id) };
     case "ON_UPDATE_ROOM_SUBSCRIPTION":
       return { ...state, room: action.payload.onUpdateRoom };
     case "ON_DELETE_ROOM_SUBSCRIPTION":
@@ -87,15 +99,32 @@ export const setRoomsList = (rooms: ListRoomsQuery): Action => {
   };
 };
 
-export const createRoomSubscription = (
+export const createRoomsSubscription = (
   room: OnCreateRoomSubscription
 ): Action => {
   return {
-    type: "ON_CREATE_ROOM_SUBSCRIPTION",
+    type: "ON_CREATE_ROOMS_SUBSCRIPTION",
     payload: room,
   };
 };
 
+export const updateRoomsSubscription = (
+  room: OnUpdateRoomSubscription
+): Action => {
+  return {
+    type: "ON_UPDATE_ROOMS_SUBSCRIPTION",
+    payload: room,
+  };
+};
+
+export const deleteRoomsSubscription = (
+  room: OnDeleteRoomSubscription
+): Action => {
+  return {
+    type: "ON_DELETE_ROOMS_SUBSCRIPTION",
+    payload: room,
+  };
+};
 export const updateRoomSubscription = (
   room: OnUpdateRoomSubscription
 ): Action => {

@@ -35,7 +35,7 @@ https://next-chat-app.vercel.app/
   - Appsync subsciription によるリアルタイムチャット
     ![chat](https://user-images.githubusercontent.com/43399066/92310620-25473c80-efeb-11ea-9f7d-e01891fdc7c8.gif)
 
-  - aws-cognito-next によるタブ感でのログイン状態の同期
+  - aws-cognito-next によるタブ間でのログイン状態の同期
     ![login](https://user-images.githubusercontent.com/43399066/92310617-1d879800-efeb-11ea-909f-57b0c1c5622b.gif)
 
   - useReducer によるステート管理
